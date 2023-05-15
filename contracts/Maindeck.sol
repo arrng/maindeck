@@ -13,10 +13,9 @@ pragma solidity 0.8.19;
 import {IMaindeck} from "./IMaindeck.sol";
 import {IENSReverseRegistrar} from "./ENS/IENSReverseRegistrar.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {IArrrrng} from "./IArrrrng.sol";
 
-contract Maindeck is IMaindeck, Ownable, Pausable {
+contract Maindeck is IMaindeck, Ownable {
   // ETH required for gas cost to serve RNG
   uint256 public treasureRequired;
 
@@ -38,6 +37,7 @@ contract Maindeck is IMaindeck, Ownable, Pausable {
    */
   constructor(address owner_) {
     _transferOwnership(owner_);
+    dubloonLimit = 100000;
   }
 
   /**
@@ -53,24 +53,6 @@ contract Maindeck is IMaindeck, Ownable, Pausable {
    * @dev CAPTAIN'S CABIN
    * ---------------------
    */
-
-  /**
-   *
-   * @dev dropAnchor: Pause the contract.
-   *
-   */
-  function dropAnchor() external garrCapnOnly {
-    _pause();
-  }
-
-  /**
-   *
-   * @dev setSail: Unpause the contract.
-   *
-   */
-  function setSail() external garrCapnOnly {
-    _unpause();
-  }
 
   /**
    *
@@ -114,12 +96,12 @@ contract Maindeck is IMaindeck, Ownable, Pausable {
    *
    * @dev raiseTheJollyRoger: set a new max number
    *
-   * @param max_: the new max requested numbers
+   * @param maxNumbersPerTxn_: the new max requested numbers
    *
    */
-  function raiseTheJollyRoger(uint256 max_) external garrCapnOnly {
-    dubloonLimit = max_;
-    emit YoHoHo(max_);
+  function raiseTheJollyRoger(uint256 maxNumbersPerTxn_) external garrCapnOnly {
+    dubloonLimit = maxNumbersPerTxn_;
+    emit DubloonLimitDoBeUpdated(maxNumbersPerTxn_);
   }
 
   /**
@@ -156,20 +138,22 @@ contract Maindeck is IMaindeck, Ownable, Pausable {
   ) external payable {
     skirmishID += 1;
 
-    require(msg.value == treasureRequired, "IncorrectGasFeeYeScurvyDog");
+    require(msg.value >= treasureRequired, "ThisDoBeNotEnoughETHForGasMatey");
+
+    require(numberOfNumbers_ > 0, "GarrrNotEnoughNumbers");
 
     require(numberOfNumbers_ <= dubloonLimit, "GarrrTooManyNumbers");
 
     (bool success, ) = firstMate.call{value: msg.value}("");
-    require(success, "Transfer failed");
+    require(success, "TheTransferWalkedThePlank!(failed)");
 
     emit ahoyThere(
-      uint96(block.chainid),
       msg.sender,
-      uint64(skirmishID),
+      uint96(skirmishID),
       uint64(numberOfNumbers_),
       uint64(minValue_),
-      uint64(maxValue_)
+      uint64(maxValue_),
+      uint64(msg.value)
     );
   }
 
@@ -185,9 +169,30 @@ contract Maindeck is IMaindeck, Ownable, Pausable {
   function landHo(
     uint256 skirmishID_,
     address ship_,
-    uint256[] calldata barrelORum_
-  ) external {
+    uint256[] calldata barrelORum_,
+    string calldata apiResponse_,
+    string calldata apiSignature_,
+    string calldata verificationSite_
+  ) external payable {
     require(msg.sender == firstMate, "BelayThatFirstMateOnly");
-    IArrrrng(ship_).avast(skirmishID_, barrelORum_);
+    emit YoHoHo(skirmishID_, apiResponse_, apiSignature_, verificationSite_);
+    IArrrrng(ship_).avast{value: msg.value}(skirmishID_, barrelORum_);
+  }
+
+  /**
+   *
+   * @dev avast: insufficient gas sent on call - refund
+   *
+   * @param skirmishID_: unique request ID
+   * @param ship_: the contract to call
+   *
+   */
+  function avast(uint256 skirmishID_, address ship_) external payable {
+    require(msg.sender == firstMate, "BelayThatFirstMateOnly");
+
+    emit InsufficientGasForTransactionRefundApplied(ship_, skirmishID_);
+
+    (bool success, ) = ship_.call{value: msg.value}("");
+    require(success, "TheTransferWalkedThePlank!(failed)");
   }
 }

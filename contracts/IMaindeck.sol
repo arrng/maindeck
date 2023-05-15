@@ -15,13 +15,25 @@ interface IMaindeck {
   event ColoursNailedToTheMast(string name);
   event TreasureMapDrawn(uint256 newTreasureRequiredForGas);
   event ahoyThere(
-    uint96 chainId,
-    address caller,
-    uint64 requestId,
+    address indexed caller,
+    uint96 indexed requestId,
     uint64 numberOfNumbers,
     uint64 minValue,
-    uint64 maxvalue
+    uint64 maxvalue,
+    uint64 ethValue
   );
+
+  event YoHoHo(
+    uint256 indexed requestId,
+    string apiResponse,
+    string apiSignature,
+    string verificationSite
+  );
+
   event AyeAyeMatey(address oracle);
-  event YoHoHo(uint256 newNumberLimited);
+  event DubloonLimitDoBeUpdated(uint256 newNumberLimited);
+  event InsufficientGasForTransactionRefundApplied(
+    address indexed caller,
+    uint256 requestId
+  );
 }

@@ -22,27 +22,30 @@ abstract contract Arrrrng {
 
   /**
    *
-   * @dev grogsUp: Do something with the RNG
+   * @dev ayeAye: Do something with the RNG
    *
    * @param skirmishID_: unique ID for this request
    * @param barrelORum_: array of random integers requested
    *
    */
-  function grogsUp(
+  function ayeAye(
     uint256 skirmishID_,
     uint256[] calldata barrelORum_
   ) internal virtual {}
 
   /**
    *
-   * @dev avast: receive RNG
+   * @dev yarrrr: receive RNG
    *
    * @param skirmishID_: unique ID for this request
    * @param barrelORum_: array of random integers requested
    *
    */
-  function avast(uint256 skirmishID_, uint256[] calldata barrelORum_) external {
+  function yarrrr(
+    uint256 skirmishID_,
+    uint256[] calldata barrelORum_
+  ) external payable {
     require(msg.sender == maindeck, "BelayThatMaindeckOnly");
-    grogsUp(skirmishID_, barrelORum_);
+    ayeAye(skirmishID_, barrelORum_);
   }
 }
