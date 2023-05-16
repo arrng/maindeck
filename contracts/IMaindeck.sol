@@ -11,10 +11,14 @@
 pragma solidity 0.8.19;
 
 interface IMaindeck {
-  event ENSLogLoggedInTheCaptainsLogOfLogs(address newENSReverseRegistrar);
-  event ColoursNailedToTheMast(string name);
-  event TreasureMapDrawn(uint256 newTreasureRequiredForGas);
-  event ahoyThere(
+  event ENSLogLoggedInTheCaptainsLogOfLogsMatey(address newENSReverseRegistrar);
+  event ColoursNailedToTheMastMatey(string ensName, bytes32 ensNameHash);
+  event SmallestTreasureChestSetMatey(uint256 minimumNativeToken);
+  event MostNumbersYeCanGetSetMatey(uint256 newNumberLimited);
+  event YarrrOfficerOnDeckMatey(address oracle);
+  event XMarksTheSpot(address treasury);
+
+  event ArrrngRequested(
     address indexed caller,
     uint96 indexed requestId,
     uint64 numberOfNumbers,
@@ -23,16 +27,13 @@ interface IMaindeck {
     uint64 ethValue
   );
 
-  event YoHoHo(
+  event ArrrngServed(
     uint256 indexed requestId,
     string apiResponse,
-    string apiSignature,
-    string verificationSite
+    string apiSignature
   );
 
-  event AyeAyeMatey(address oracle);
-  event DubloonLimitDoBeUpdated(uint256 newNumberLimited);
-  event InsufficientGasForTransactionRefundApplied(
+  event ArrrngRefundInsufficientTokenForGasMatey(
     address indexed caller,
     uint256 requestId
   );
