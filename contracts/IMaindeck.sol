@@ -18,7 +18,7 @@ interface IMaindeck {
   event YarrrOfficerOnDeckMatey(address oracle);
   event XMarksTheSpot(address treasury);
 
-  event ArrrngRequested(
+  event ArrrngRequest(
     address indexed caller,
     uint96 indexed requestId,
     uint64 numberOfNumbers,
@@ -27,13 +27,16 @@ interface IMaindeck {
     uint64 ethValue
   );
 
+  event ArrrngResponse(bytes32 requestTxnHash);
+
   event ArrrngServed(
     uint256 indexed requestId,
+    uint256[] randomNumbers,
     string apiResponse,
     string apiSignature
   );
 
-  event ArrrngRefundInsufficientTokenForGasMatey(
+  event ArrrngRefundInsufficientTokenForGas(
     address indexed caller,
     uint256 requestId
   );

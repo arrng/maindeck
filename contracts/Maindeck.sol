@@ -235,7 +235,7 @@ contract Maindeck is IMaindeck, Ownable {
     (bool success, ) = firstMate.call{value: msg.value}("");
     require(success, "TheTransferWalkedThePlank!(failed)");
 
-    emit ArrrngRequested(
+    emit ArrrngRequest(
       msg.sender,
       uint96(skirmishID),
       uint64(numberOfNumbers_),
@@ -249,39 +249,54 @@ contract Maindeck is IMaindeck, Ownable {
 
   /**
    *
-   * @dev landHo: serve RNG
+   * @dev landHo: serve result of the call
    *
    * @param skirmishID_: unique request ID
    * @param ship_: the contract to call
+   * @param responseCode_: 0 is success, !0 = failure
    * @param barrelORum_: the array of random integers
+   * @param apiResponse_: the response from the off-chain rng provider
+   * @param apiSignature_: signature for the rng response
    *
    */
   function landHo(
     uint256 skirmishID_,
     address ship_,
+    bytes32 requestTxnHash_,
+    uint256 responseCode_,
     uint256[] calldata barrelORum_,
     string calldata apiResponse_,
     string calldata apiSignature_
   ) external payable {
     require(msg.sender == firstMate, "BelayThatFirstMateOnly");
-    emit ArrrngServed(skirmishID_, apiResponse_, apiSignature_);
-    IArrrrng(ship_).avast{value: msg.value}(skirmishID_, barrelORum_);
-  }
+    emit ArrrngResponse(requestTxnHash_);
+    if (responseCode_ == 0) {
+      // Success
+      //
+      // arrrrng can be requested by a contract call or from an EOA. In the
+      // case of a contract call we need to call the external method that the calling
+      // contract must include to perform downstream processing using the rng. In
+      // the case of an EOA call this is a user requesting signed, verifiable rng
+      // that is stored on-chain (through emitted events), that they intend to use
+      // manually. So in the case of the EOA call we emit the results and send them
+      // the refund, i.e. no method call.
+      emit ArrrngServed(skirmishID_, barrelORum_, apiResponse_, apiSignature_);
+      if (ship_.code.length > 0) {
+        // Call the avast method on the calling contract to pass the rng and the
+        // refund:
+        IArrrrng(ship_).avast{value: msg.value}(skirmishID_, barrelORum_);
+      } else {
+        // Refund the EOA any native token not used for gas:
+        (bool success, ) = ship_.call{value: msg.value}("");
+        require(success, "TheTransferWalkedThePlank!(failed)");
+      }
+    } else {
+      // Failure
+      //
+      emit ArrrngRefundInsufficientTokenForGas(ship_, skirmishID_);
 
-  /**
-   *
-   * @dev avast: insufficient gas sent on call - instarefund
-   *
-   * @param skirmishID_: unique request ID
-   * @param ship_: the contract to call
-   *
-   */
-  function avast(uint256 skirmishID_, address ship_) external payable {
-    require(msg.sender == firstMate, "BelayThatFirstMateOnly");
-
-    emit ArrrngRefundInsufficientTokenForGasMatey(ship_, skirmishID_);
-
-    (bool success, ) = ship_.call{value: msg.value}("");
-    require(success, "TheTransferWalkedThePlank!(failed)");
+      (bool success, ) = ship_.call{value: msg.value}("");
+      require(success, "TheTransferWalkedThePlank!(failed)");
+    }
   }
 }
