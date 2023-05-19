@@ -19,7 +19,7 @@ interface IArrrrng {
    * @param barrelORum_: array of random integers requested
    *
    */
-  function avast(
+  function yarrrr(
     uint256 skirmishID_,
     uint256[] memory barrelORum_
   ) external payable;

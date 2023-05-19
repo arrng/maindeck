@@ -10,7 +10,7 @@
 
 pragma solidity 0.8.19;
 
-abstract contract Arrrrng {
+abstract contract ArrrrngConsumer {
   address private immutable maindeck;
 
   /**
@@ -24,14 +24,14 @@ abstract contract Arrrrng {
    *
    * @dev ayeAye: Do something with the RNG
    *
-   * @param skirmishID_: unique ID for this request
-   * @param barrelORum_: array of random integers requested
+   * @param requestId: unique ID for this request
+   * @param randomWords: array of random integers requested
    *
    */
-  function ayeAye(
-    uint256 skirmishID_,
-    uint256[] calldata barrelORum_
-  ) internal virtual {}
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal virtual;
 
   /**
    *
@@ -46,6 +46,6 @@ abstract contract Arrrrng {
     uint256[] calldata barrelORum_
   ) external payable {
     require(msg.sender == maindeck, "BelayThatMaindeckOnly");
-    ayeAye(skirmishID_, barrelORum_);
+    fulfillRandomWords(skirmishID_, barrelORum_);
   }
 }

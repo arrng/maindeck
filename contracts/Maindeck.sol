@@ -206,9 +206,34 @@ contract Maindeck is IMaindeck, Ownable {
    * -------------------------------------------------------------
    */
 
+  function requestRandomNumbers(
+    uint32 numWords_,
+    address refundAddress_
+  ) external payable returns (uint256 requestId) {
+    return ahoy_(msg.sender, msg.value, 0, numWords_, 0, 0, refundAddress_);
+  }
+
+  function requestRandomNumbersInRange(
+    uint256 numberOfNumbers_,
+    uint256 minValue_,
+    uint256 maxValue_,
+    address refundAddress_
+  ) external payable returns (uint256 requestId) {
+    return
+      ahoy_(
+        msg.sender,
+        msg.value,
+        1,
+        numberOfNumbers_,
+        minValue_,
+        maxValue_,
+        refundAddress_
+      );
+  }
+
   /**
    *
-   * @dev ahoy: request RNG
+   * @dev ahoy_: request RNG
    *
    * @param numberOfNumbers_: the amount of numbers to request
    * @param minValue_: the min of the range
@@ -216,15 +241,19 @@ contract Maindeck is IMaindeck, Ownable {
    *
    * @return uniqueID_ : unique ID for this request
    */
-  function ahoy(
+  function ahoy_(
+    address caller_,
+    uint256 payment_,
+    uint256 method_,
     uint256 numberOfNumbers_,
     uint256 minValue_,
-    uint256 maxValue_
-  ) external payable returns (uint256 uniqueID_) {
+    uint256 maxValue_,
+    address refundAddress_
+  ) internal returns (uint256 uniqueID_) {
     skirmishID += 1;
 
     require(
-      msg.value >= minimumNativeToken,
+      payment_ >= minimumNativeToken,
       "ThisDoBeNotEnoughTokenForGasMatey"
     );
 
@@ -232,16 +261,18 @@ contract Maindeck is IMaindeck, Ownable {
 
     require(numberOfNumbers_ <= maximumNumberOfNumbers, "GarrrTooManyNumbers");
 
-    (bool success, ) = firstMate.call{value: msg.value}("");
+    (bool success, ) = firstMate.call{value: payment_}("");
     require(success, "TheTransferWalkedThePlank!(failed)");
 
     emit ArrrngRequest(
-      msg.sender,
-      uint96(skirmishID),
+      caller_,
+      uint64(skirmishID),
+      uint32(method_),
       uint64(numberOfNumbers_),
       uint64(minValue_),
       uint64(maxValue_),
-      uint64(msg.value)
+      uint64(payment_),
+      refundAddress_
     );
 
     return (skirmishID);
@@ -265,6 +296,7 @@ contract Maindeck is IMaindeck, Ownable {
     bytes32 requestTxnHash_,
     uint256 responseCode_,
     uint256[] calldata barrelORum_,
+    address refundAddress_,
     string calldata apiResponse_,
     string calldata apiSignature_
   ) external payable {
@@ -282,21 +314,28 @@ contract Maindeck is IMaindeck, Ownable {
       // the refund, i.e. no method call.
       emit ArrrngServed(skirmishID_, barrelORum_, apiResponse_, apiSignature_);
       if (ship_.code.length > 0) {
-        // Call the avast method on the calling contract to pass the rng and the
-        // refund:
-        IArrrrng(ship_).avast{value: msg.value}(skirmishID_, barrelORum_);
+        // If the calling contract is the same as the refund address then return
+        // ramdomness and the refund in a single function call:
+        if (refundAddress_ == ship_) {
+          IArrrrng(ship_).yarrrr{value: msg.value}(skirmishID_, barrelORum_);
+        } else {
+          IArrrrng(ship_).yarrrr{value: 0}(skirmishID_, barrelORum_);
+          processPayment_(refundAddress_, msg.value);
+        }
       } else {
         // Refund the EOA any native token not used for gas:
-        (bool success, ) = ship_.call{value: msg.value}("");
-        require(success, "TheTransferWalkedThePlank!(failed)");
+        processPayment_(refundAddress_, msg.value);
       }
     } else {
       // Failure
       //
       emit ArrrngRefundInsufficientTokenForGas(ship_, skirmishID_);
-
-      (bool success, ) = ship_.call{value: msg.value}("");
-      require(success, "TheTransferWalkedThePlank!(failed)");
+      processPayment_(refundAddress_, msg.value);
     }
+  }
+
+  function processPayment_(address payeeAddress_, uint256 amount_) internal {
+    (bool success, ) = payeeAddress_.call{value: amount_}("");
+    require(success, "TheTransferWalkedThePlank!(failed)");
   }
 }

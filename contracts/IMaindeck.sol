@@ -20,11 +20,13 @@ interface IMaindeck {
 
   event ArrrngRequest(
     address indexed caller,
-    uint96 indexed requestId,
+    uint64 indexed requestId,
+    uint32 method,
     uint64 numberOfNumbers,
     uint64 minValue,
     uint64 maxvalue,
-    uint64 ethValue
+    uint64 ethValue,
+    address refundAddress
   );
 
   event ArrrngResponse(bytes32 requestTxnHash);
