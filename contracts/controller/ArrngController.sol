@@ -2,7 +2,7 @@
 
 /**
  *
- * @title Maindeck.sol. Core contract for arrrrng, the world's first
+ * @title ArrngController.sol. Core contract for arrng, the world's first
  * pirate themed multi-chain off-chain RNG generator with full
  * on-chain storage of data and signatures.
  *
@@ -11,20 +11,20 @@
  * No confusing parameters and hashes. Pay in native token for the
  * randomness you need.
  *
- * @author arrrrng https://arrrrng.xyz/
+ * @author arrng https://arrng.xyz/
  *
  */
 
 pragma solidity 0.8.19;
 
-import {IMaindeck} from "./IMaindeck.sol";
-import {IENSReverseRegistrar} from "./ENS/IENSReverseRegistrar.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IArrngController} from "./IArrngController.sol";
+import {IArrngConsumer} from "../consumer/IArrngConsumer.sol";
+import {IENSReverseRegistrar} from "../ENS/IENSReverseRegistrar.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IArrrrng} from "./IArrrrng.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Maindeck is IMaindeck, Ownable {
+contract ArrngController is IArrngController, Ownable {
   using SafeERC20 for IERC20;
 
   // Native token required for gas cost to serve RNG:
@@ -45,6 +45,34 @@ contract Maindeck is IMaindeck, Ownable {
   // Address of the ENS reverse registrar to allow assignment of an ENS
   // name to this contract:
   IENSReverseRegistrar public ensLog;
+
+  event ENSLogLoggedInTheCaptainsLogOfLogsMatey(address newENSReverseRegistrar);
+  event ColoursNailedToTheMastMatey(string ensName, bytes32 ensNameHash);
+  event SmallestTreasureChestSetMatey(uint256 minimumNativeToken);
+  event MostNumbersYeCanGetSetMatey(uint256 newNumberLimited);
+  event YarrrOfficerOnDeckMatey(address oracle);
+  event XMarksTheSpot(address treasury);
+  event ArrrngRequest(
+    address indexed caller,
+    uint64 indexed requestId,
+    uint32 method,
+    uint64 numberOfNumbers,
+    uint64 minValue,
+    uint64 maxvalue,
+    uint64 ethValue,
+    address refundAddress
+  );
+  event ArrrngResponse(bytes32 requestTxnHash);
+  event ArrrngServed(
+    uint256 indexed requestId,
+    uint256[] randomNumbers,
+    string apiResponse,
+    string apiSignature
+  );
+  event ArrrngRefundInsufficientTokenForGas(
+    address indexed caller,
+    uint256 requestId
+  );
 
   /**
    *
@@ -217,7 +245,7 @@ contract Maindeck is IMaindeck, Ownable {
 
   /**
    *
-   * @dev requestRandomNumbers: request 1 to n uint256 integers
+   * @dev requestRandomWords: request 1 to n uint256 integers
    * requestRandomNumbers is overloaded. In this instance you can
    * call it without explicitly declaring a refund address, with the
    * refund being paid to the tx.origin for this call.
@@ -226,15 +254,15 @@ contract Maindeck is IMaindeck, Ownable {
    *
    * @return uniqueID_ : unique ID for this request
    */
-  function requestRandomNumbers(
+  function requestRandomWords(
     uint32 numberOfNumbers_
   ) external payable returns (uint256 uniqueID_) {
-    return requestRandomNumbers(numberOfNumbers_, tx.origin);
+    return requestRandomWords(numberOfNumbers_, tx.origin);
   }
 
   /**
    *
-   * @dev requestRandomNumbers: request 1 to n uint256 integers
+   * @dev requestRandomWords: request 1 to n uint256 integers
    * requestRandomNumbers is overloaded. In this instance you must
    * specify the refund address for unused native token.
    *
@@ -243,7 +271,7 @@ contract Maindeck is IMaindeck, Ownable {
    *
    * @return uniqueID_ : unique ID for this request
    */
-  function requestRandomNumbers(
+  function requestRandomWords(
     uint32 numberOfNumbers_,
     address refundAddress_
   ) public payable returns (uint256 uniqueID_) {
@@ -438,9 +466,9 @@ contract Maindeck is IMaindeck, Ownable {
       // If the calling contract is the same as the refund address then return
       // ramdomness and the refund in a single function call:
       if (refundAddress_ == ship_) {
-        IArrrrng(ship_).yarrrr{value: amount_}(skirmishID_, barrelONum_);
+        IArrngConsumer(ship_).yarrrr{value: amount_}(skirmishID_, barrelONum_);
       } else {
-        IArrrrng(ship_).yarrrr{value: 0}(skirmishID_, barrelONum_);
+        IArrngConsumer(ship_).yarrrr{value: 0}(skirmishID_, barrelONum_);
         processPayment_(refundAddress_, amount_);
       }
     } else {

@@ -2,27 +2,29 @@
 
 /**
  *
- * @title Arrrrng.sol. Use arrrrng
+ * @title ArrngConsumer.sol. Use arrng
  *
- * @author arrrrng https://arrrrng.xyz/
+ * @author arrng https://arrng.xyz/
  *
  */
 
+import {IArrngConsumer} from "./IArrngConsumer.sol";
+
 pragma solidity 0.8.19;
 
-abstract contract ArrrrngConsumer {
-  address private immutable maindeck;
+abstract contract ArrngConsumer is IArrngConsumer {
+  address private immutable arrngController;
 
   /**
    * @dev constructor
    */
-  constructor(address maindeck_) {
-    maindeck = maindeck_;
+  constructor(address arrngController_) {
+    arrngController = arrngController_;
   }
 
   /**
    *
-   * @dev ayeAye: Do something with the RNG
+   * @dev fulfillRandomWords: Do something with the RNG
    *
    * @param requestId: unique ID for this request
    * @param randomWords: array of random integers requested
@@ -45,7 +47,7 @@ abstract contract ArrrrngConsumer {
     uint256 skirmishID_,
     uint256[] calldata barrelORum_
   ) external payable {
-    require(msg.sender == maindeck, "BelayThatMaindeckOnly");
+    require(msg.sender == arrngController, "BelayThatOfficersOnly");
     fulfillRandomWords(skirmishID_, barrelORum_);
   }
 }

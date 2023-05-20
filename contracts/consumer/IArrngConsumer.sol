@@ -2,15 +2,15 @@
 
 /**
  *
- * @title IArrrrng.sol. Use arrrrng
+ * @title IArrngConsumer.sol. Use arrng
  *
- * @author arrrrng https://arrrrng.xyz/
+ * @author arrng https://arrng.xyz/
  *
  */
 
 pragma solidity 0.8.19;
 
-interface IArrrrng {
+interface IArrngConsumer {
   /**
    *
    * @dev avast: receive RNG
