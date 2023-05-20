@@ -4,9 +4,12 @@
  *
  * @title Maindeck.sol. Core contract for arrrrng, the world's first
  * pirate themed multi-chain off-chain RNG generator with full
- * on-chain storage of data and signatures for off-chain verification
- * of on-chain dadadadadad.da...dada..da...dad...dadad...data!
- * Sing it with me!
+ * on-chain storage of data and signatures.
+ *
+ * No subscriptions, ERC20 tokens or funds held in escrow.
+ *
+ * No confusing parameters and hashes. Pay in native token for the
+ * randomness you need.
  *
  * @author arrrrng https://arrrrng.xyz/
  *
@@ -47,12 +50,12 @@ contract Maindeck is IMaindeck, Ownable {
    *
    * @dev constructor
    *
-   * @param captain_: our master/mistress and commander
+   * @param captain_: our master/mistress/other pronoun and commander
    *
    */
   constructor(address captain_) {
     _transferOwnership(captain_);
-    maximumNumberOfNumbers = 100000;
+    maximumNumberOfNumbers = 10000;
   }
 
   /**
@@ -131,6 +134,7 @@ contract Maindeck is IMaindeck, Ownable {
    *
    */
   function thisDoBeTheFirstMate(address payable oracle_) external garrCapnOnly {
+    require(oracle_ != address(0), "Are ye mad me hearty?!");
     firstMate = oracle_;
     emit YarrrOfficerOnDeckMatey(oracle_);
   }
@@ -145,26 +149,29 @@ contract Maindeck is IMaindeck, Ownable {
   function thisDoBeTheStrongbox(
     address payable treasury_
   ) external garrCapnOnly {
+    require(treasury_ != address(0), "Are ye mad me hearty?!");
     strongbox = treasury_;
     emit XMarksTheSpot(treasury_);
   }
 
   /**
    *
-   * @dev getGold: cap'n can pull native token to the strong box!
+   * @dev getGold: cap'n can pull native token to the strongbox!
    *
    * @param amount_: amount to withdraw
    *
    */
   function getGold(uint256 amount_) external garrCapnOnly {
+    require(strongbox != address(0), "Are ye mad me hearty?!");
     (bool success, ) = strongbox.call{value: amount_}("");
     require(success, "Transfer failed");
   }
 
   /**
    *
-   * @dev getDubloons: cap'n can pull tokens to the strong box!
+   * @dev getDubloons: cap'n can pull tokens to the strongbox!
    *
+   * @param erc20Address_: the contract address for the token
    * @param amount_: amount to withdraw
    *
    */
@@ -172,13 +179,14 @@ contract Maindeck is IMaindeck, Ownable {
     address erc20Address_,
     uint256 amount_
   ) external garrCapnOnly {
-    IERC20(erc20Address_).safeTransferFrom(address(this), owner(), amount_);
+    require(strongbox != address(0), "Are ye mad me hearty?!");
+    IERC20(erc20Address_).safeTransferFrom(address(this), strongbox, amount_);
   }
 
   /**
    *
-   * @dev getGems: Retrieve ERC721s (likely only the ENS
-   * associated with this contract)
+   * @dev getGems: Pull ERC721s (likely only the ENS
+   * associated with this contract) to the strongbox.
    *
    * @param erc721Address_: The token contract for the withdrawal
    * @param tokenIDs_: the list of tokenIDs for the withdrawal
@@ -188,10 +196,11 @@ contract Maindeck is IMaindeck, Ownable {
     address erc721Address_,
     uint256[] memory tokenIDs_
   ) external garrCapnOnly {
+    require(strongbox != address(0), "Are ye mad me hearty?!");
     for (uint256 i = 0; i < tokenIDs_.length; ) {
       IERC721(erc721Address_).transferFrom(
         address(this),
-        owner(),
+        strongbox,
         tokenIDs_[i]
       );
       unchecked {
@@ -206,19 +215,90 @@ contract Maindeck is IMaindeck, Ownable {
    * -------------------------------------------------------------
    */
 
+  /**
+   *
+   * @dev requestRandomNumbers: request 1 to n uint256 integers
+   * requestRandomNumbers is overloaded. In this instance you can
+   * call it without explicitly declaring a refund address, with the
+   * refund being paid to the tx.origin for this call.
+   *
+   * @param numberOfNumbers_: the amount of numbers to request
+   *
+   * @return uniqueID_ : unique ID for this request
+   */
   function requestRandomNumbers(
-    uint32 numWords_,
-    address refundAddress_
-  ) external payable returns (uint256 requestId) {
-    return ahoy_(msg.sender, msg.value, 0, numWords_, 0, 0, refundAddress_);
+    uint32 numberOfNumbers_
+  ) external payable returns (uint256 uniqueID_) {
+    return requestRandomNumbers(numberOfNumbers_, tx.origin);
   }
 
+  /**
+   *
+   * @dev requestRandomNumbers: request 1 to n uint256 integers
+   * requestRandomNumbers is overloaded. In this instance you must
+   * specify the refund address for unused native token.
+   *
+   * @param numberOfNumbers_: the amount of numbers to request
+   * @param refundAddress_: the address for refund of native token
+   *
+   * @return uniqueID_ : unique ID for this request
+   */
+  function requestRandomNumbers(
+    uint32 numberOfNumbers_,
+    address refundAddress_
+  ) public payable returns (uint256 uniqueID_) {
+    return
+      ahoy_(msg.sender, msg.value, 0, numberOfNumbers_, 0, 0, refundAddress_);
+  }
+
+  /**
+   *
+   * @dev requestRandomNumbersInRange: request 1 to n integers within
+   * a given range (e.g. 1 to 10,000)
+   * requestRandomNumbersInRange is overloaded. In this instance you can
+   * call it without explicitly declaring a refund address, with the
+   * refund being paid to the tx.origin for this call.
+   *
+   * @param numberOfNumbers_: the amount of numbers to request
+   * @param minValue_: the min of the range
+   * @param maxValue_: the max of the range
+   *
+   * @return uniqueID_ : unique ID for this request
+   */
+  function requestRandomNumbersInRange(
+    uint256 numberOfNumbers_,
+    uint256 minValue_,
+    uint256 maxValue_
+  ) public payable returns (uint256 uniqueID_) {
+    return
+      requestRandomNumbersInRange(
+        numberOfNumbers_,
+        minValue_,
+        maxValue_,
+        tx.origin
+      );
+  }
+
+  /**
+   *
+   * @dev requestRandomNumbersInRange: request 1 to n integers within
+   * a given range (e.g. 1 to 10,000)
+   * requestRandomNumbersInRange is overloaded. In this instance you must
+   * specify the refund address for unused native token.
+   *
+   * @param numberOfNumbers_: the amount of numbers to request
+   * @param refundAddress_: the address for refund of native token
+   * @param minValue_: the min of the range
+   * @param maxValue_: the max of the range
+   *
+   * @return uniqueID_ : unique ID for this request
+   */
   function requestRandomNumbersInRange(
     uint256 numberOfNumbers_,
     uint256 minValue_,
     uint256 maxValue_,
     address refundAddress_
-  ) external payable returns (uint256 requestId) {
+  ) public payable returns (uint256 uniqueID_) {
     return
       ahoy_(
         msg.sender,
@@ -235,9 +315,13 @@ contract Maindeck is IMaindeck, Ownable {
    *
    * @dev ahoy_: request RNG
    *
+   * @param caller_: the msg.sender that has made this call
+   * @param payment_: the msg.value sent with the call
+   * @param method_: the method for the oracle to execute
    * @param numberOfNumbers_: the amount of numbers to request
    * @param minValue_: the min of the range
    * @param maxValue_: the max of the range
+   * @param refundAddress_: the address for refund of ununsed native token
    *
    * @return uniqueID_ : unique ID for this request
    */
@@ -284,8 +368,10 @@ contract Maindeck is IMaindeck, Ownable {
    *
    * @param skirmishID_: unique request ID
    * @param ship_: the contract to call
+   * @param requestTxnHash_: the txn hash of the original request
    * @param responseCode_: 0 is success, !0 = failure
-   * @param barrelORum_: the array of random integers
+   * @param barrelONum_: the array of random integers
+   * @param refundAddress_: the address for refund of native token not used for gas
    * @param apiResponse_: the response from the off-chain rng provider
    * @param apiSignature_: signature for the rng response
    *
@@ -295,7 +381,7 @@ contract Maindeck is IMaindeck, Ownable {
     address ship_,
     bytes32 requestTxnHash_,
     uint256 responseCode_,
-    uint256[] calldata barrelORum_,
+    uint256[] calldata barrelONum_,
     address refundAddress_,
     string calldata apiResponse_,
     string calldata apiSignature_
@@ -303,37 +389,96 @@ contract Maindeck is IMaindeck, Ownable {
     require(msg.sender == firstMate, "BelayThatFirstMateOnly");
     emit ArrrngResponse(requestTxnHash_);
     if (responseCode_ == 0) {
-      // Success
-      //
-      // arrrrng can be requested by a contract call or from an EOA. In the
-      // case of a contract call we need to call the external method that the calling
-      // contract must include to perform downstream processing using the rng. In
-      // the case of an EOA call this is a user requesting signed, verifiable rng
-      // that is stored on-chain (through emitted events), that they intend to use
-      // manually. So in the case of the EOA call we emit the results and send them
-      // the refund, i.e. no method call.
-      emit ArrrngServed(skirmishID_, barrelORum_, apiResponse_, apiSignature_);
-      if (ship_.code.length > 0) {
-        // If the calling contract is the same as the refund address then return
-        // ramdomness and the refund in a single function call:
-        if (refundAddress_ == ship_) {
-          IArrrrng(ship_).yarrrr{value: msg.value}(skirmishID_, barrelORum_);
-        } else {
-          IArrrrng(ship_).yarrrr{value: 0}(skirmishID_, barrelORum_);
-          processPayment_(refundAddress_, msg.value);
-        }
-      } else {
-        // Refund the EOA any native token not used for gas:
-        processPayment_(refundAddress_, msg.value);
-      }
+      arrrrngSuccess_(
+        skirmishID_,
+        ship_,
+        barrelONum_,
+        refundAddress_,
+        apiResponse_,
+        apiSignature_,
+        msg.value
+      );
     } else {
-      // Failure
-      //
-      emit ArrrngRefundInsufficientTokenForGas(ship_, skirmishID_);
-      processPayment_(refundAddress_, msg.value);
+      arrrrngFailure_(skirmishID_, ship_, refundAddress_, msg.value);
     }
   }
 
+  /**
+   *
+   * @dev arrrrngSuccess_: process a successful response
+   * arrrrng can be requested by a contract call or from an EOA. In the
+   * case of a contract call we call the external method that the calling
+   * contract must include to perform downstream processing using the rng. In
+   * the case of an EOA call this is a user requesting signed, verifiable rng
+   * that is stored on-chain (through emitted events), that they intend to use
+   * manually. So in the case of the EOA call we emit the results and send them
+   * the refund, i.e. no method call.
+   *
+   * @param skirmishID_: unique request ID
+   * @param ship_: the contract to call
+   * @param barrelONum_: the array of random integers
+   * @param refundAddress_: the address for unused token refund
+   * @param apiResponse_: the response from the off-chain rng provider
+   * @param apiSignature_: signature for the rng response
+   * @param amount_: the amount of unused native toke to refund
+   *
+   */
+  function arrrrngSuccess_(
+    uint256 skirmishID_,
+    address ship_,
+    uint256[] calldata barrelONum_,
+    address refundAddress_,
+    string calldata apiResponse_,
+    string calldata apiSignature_,
+    uint256 amount_
+  ) internal {
+    // Success
+    emit ArrrngServed(skirmishID_, barrelONum_, apiResponse_, apiSignature_);
+    if (ship_.code.length > 0) {
+      // If the calling contract is the same as the refund address then return
+      // ramdomness and the refund in a single function call:
+      if (refundAddress_ == ship_) {
+        IArrrrng(ship_).yarrrr{value: amount_}(skirmishID_, barrelONum_);
+      } else {
+        IArrrrng(ship_).yarrrr{value: 0}(skirmishID_, barrelONum_);
+        processPayment_(refundAddress_, amount_);
+      }
+    } else {
+      // Refund the EOA any native token not used for gas:
+      processPayment_(refundAddress_, amount_);
+    }
+  }
+
+  /**
+   *
+   * @dev arrrrngFailure_: process a failed response
+   * Refund any native token not used for gas:
+   *
+   * @param skirmishID_: unique request ID
+   * @param ship_: the contract to call
+   * @param refundAddress_: the address for the refund
+   * @param amount_: the amount for the refund
+   *
+   */
+  function arrrrngFailure_(
+    uint256 skirmishID_,
+    address ship_,
+    address refundAddress_,
+    uint256 amount_
+  ) internal {
+    // Failure
+    emit ArrrngRefundInsufficientTokenForGas(ship_, skirmishID_);
+    processPayment_(refundAddress_, amount_);
+  }
+
+  /**
+   *
+   * @dev processPayment_: central function for payment processing
+   *
+   * @param payeeAddress_: address to pay.
+   * @param amount_: amount to pay.
+   *
+   */
   function processPayment_(address payeeAddress_, uint256 amount_) internal {
     (bool success, ) = payeeAddress_.call{value: amount_}("");
     require(success, "TheTransferWalkedThePlank!(failed)");
