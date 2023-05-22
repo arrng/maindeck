@@ -23,7 +23,7 @@ interface IArrngController {
    * @return uniqueID_ : unique ID for this request
    */
   function requestRandomWords(
-    uint32 numberOfNumbers_
+    uint256 numberOfNumbers_
   ) external payable returns (uint256 uniqueID_);
 
   /**
@@ -38,7 +38,7 @@ interface IArrngController {
    * @return uniqueID_ : unique ID for this request
    */
   function requestRandomWords(
-    uint32 numberOfNumbers_,
+    uint256 numberOfNumbers_,
     address refundAddress_
   ) external payable returns (uint256 uniqueID_);
 

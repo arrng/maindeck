@@ -9,6 +9,7 @@
  */
 
 import {IArrngConsumer} from "./IArrngConsumer.sol";
+import {IArrngController} from "../controller/IArrngController.sol";
 
 pragma solidity 0.8.19;
 
@@ -40,14 +41,14 @@ abstract contract ArrngConsumer is IArrngConsumer {
    * @dev yarrrr: receive RNG
    *
    * @param skirmishID_: unique ID for this request
-   * @param barrelORum_: array of random integers requested
+   * @param barrelONum_: array of random integers requested
    *
    */
   function yarrrr(
     uint256 skirmishID_,
-    uint256[] calldata barrelORum_
+    uint256[] calldata barrelONum_
   ) external payable {
     require(msg.sender == arrngController, "BelayThatOfficersOnly");
-    fulfillRandomWords(skirmishID_, barrelORum_);
+    fulfillRandomWords(skirmishID_, barrelONum_);
   }
 }

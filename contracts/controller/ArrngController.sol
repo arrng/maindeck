@@ -23,9 +23,11 @@ import {IENSReverseRegistrar} from "../ENS/IENSReverseRegistrar.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ArrngController is IArrngController, Ownable {
   using SafeERC20 for IERC20;
+  using Strings for uint256;
 
   // Native token required for gas cost to serve RNG:
   uint256 public minimumNativeToken;
@@ -255,7 +257,7 @@ contract ArrngController is IArrngController, Ownable {
    * @return uniqueID_ : unique ID for this request
    */
   function requestRandomWords(
-    uint32 numberOfNumbers_
+    uint256 numberOfNumbers_
   ) external payable returns (uint256 uniqueID_) {
     return requestRandomWords(numberOfNumbers_, tx.origin);
   }
@@ -272,7 +274,7 @@ contract ArrngController is IArrngController, Ownable {
    * @return uniqueID_ : unique ID for this request
    */
   function requestRandomWords(
-    uint32 numberOfNumbers_,
+    uint256 numberOfNumbers_,
     address refundAddress_
   ) public payable returns (uint256 uniqueID_) {
     return
@@ -364,10 +366,14 @@ contract ArrngController is IArrngController, Ownable {
   ) internal returns (uint256 uniqueID_) {
     skirmishID += 1;
 
-    require(
-      payment_ >= minimumNativeToken,
-      "ThisDoBeNotEnoughTokenForGasMatey"
-    );
+    if (payment_ < minimumNativeToken) {
+      string memory message = string.concat(
+        "Insufficient native token for gas, minimum is ",
+        minimumNativeToken.toString(),
+        ". You may need more depending on the number of numbers requested and prevailing gas cost. All excess refunded, less txn fee."
+      );
+      require(payment_ >= minimumNativeToken, message);
+    }
 
     require(numberOfNumbers_ > 0, "GarrrNotEnoughNumbers");
 
