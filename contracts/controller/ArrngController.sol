@@ -66,7 +66,8 @@ contract ArrngController is IArrngController, Ownable {
   );
   event ArrrngResponse(bytes32 requestTxnHash);
   event ArrrngServed(
-    uint256 indexed requestId,
+    uint128 indexed requestId,
+    uint128 feeCharged,
     uint256[] randomNumbers,
     string apiResponse,
     string apiSignature
@@ -418,7 +419,8 @@ contract ArrngController is IArrngController, Ownable {
     uint256[] calldata barrelONum_,
     address refundAddress_,
     string calldata apiResponse_,
-    string calldata apiSignature_
+    string calldata apiSignature_,
+    uint256 feeCharged_
   ) external payable {
     require(msg.sender == firstMate, "BelayThatFirstMateOnly");
     emit ArrrngResponse(requestTxnHash_);
@@ -430,7 +432,8 @@ contract ArrngController is IArrngController, Ownable {
         refundAddress_,
         apiResponse_,
         apiSignature_,
-        msg.value
+        msg.value,
+        feeCharged_
       );
     } else {
       arrrrngFailure_(skirmishID_, ship_, refundAddress_, msg.value);
@@ -464,10 +467,17 @@ contract ArrngController is IArrngController, Ownable {
     address refundAddress_,
     string calldata apiResponse_,
     string calldata apiSignature_,
-    uint256 amount_
+    uint256 amount_,
+    uint256 feeCharged_
   ) internal {
     // Success
-    emit ArrrngServed(skirmishID_, barrelONum_, apiResponse_, apiSignature_);
+    emit ArrrngServed(
+      uint128(skirmishID_),
+      uint128(feeCharged_),
+      barrelONum_,
+      apiResponse_,
+      apiSignature_
+    );
     if (ship_.code.length > 0) {
       // If the calling contract is the same as the refund address then return
       // ramdomness and the refund in a single function call:
