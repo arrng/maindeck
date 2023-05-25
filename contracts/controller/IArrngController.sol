@@ -14,7 +14,7 @@ interface IArrngController {
   /**
    *
    * @dev requestRandomWords: request 1 to n uint256 integers
-   * requestRandomNumbers is overloaded. In this instance you can
+   * requestRandomWords is overloaded. In this instance you can
    * call it without explicitly declaring a refund address, with the
    * refund being paid to the tx.origin for this call.
    *
@@ -29,7 +29,7 @@ interface IArrngController {
   /**
    *
    * @dev requestRandomWords: request 1 to n uint256 integers
-   * requestRandomNumbers is overloaded. In this instance you must
+   * requestRandomWords is overloaded. In this instance you must
    * specify the refund address for unused native token.
    *
    * @param numberOfNumbers_: the amount of numbers to request

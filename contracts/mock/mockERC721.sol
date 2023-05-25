@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract mockERC721 is ERC721, ERC721Burnable, Ownable {
+contract MockERC721 is ERC721, ERC721Burnable, Ownable {
   using Counters for Counters.Counter;
 
   Counters.Counter private _tokenIdCounter;

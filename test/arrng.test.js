@@ -7,24 +7,36 @@ describe("Arng Controller", function () {
   let addr2
   let addr3
   let addr4
-  let addr5
-  let treasury
+  let mockOracle
+  let addrs
 
   let hhArrngController
   let hhMockERC20
   let hhMockERC721
+  let hhMockConsumer
+
+  const prerevealURI = "www.prereveal-uri.com"
+  const revealedURI = "www.revealed-uri.com/"
 
   before(async function () {
-    ;[owner, addr1, addr2, addr3, addr4, addr5, treasury, ...addrs] =
+    ;[owner, addr1, addr2, addr3, addr4, mockOracle, ...addrs] =
       await ethers.getSigners()
 
     const arrngController = await ethers.getContractFactory("ArrngController")
     hhArrngController = await arrngController.deploy(owner.address)
 
-    const mockERC20 = await ethers.getContractFactory("mockERC20")
-    const mockERC721 = await ethers.getContractFactory("mockERC721")
+    const mockERC20 = await ethers.getContractFactory("MockERC20")
+    const mockERC721 = await ethers.getContractFactory("MockERC721")
     hhMockERC20 = await mockERC20.deploy()
     hhMockERC721 = await mockERC721.deploy()
+
+    const mockConsumer = await ethers.getContractFactory("MockConsumer")
+    hhMockConsumer = await mockConsumer.deploy(
+      100,
+      prerevealURI,
+      revealedURI,
+      hhArrngController.address,
+    )
   })
 
   context("ArrngController", function () {
@@ -99,10 +111,12 @@ describe("Arng Controller", function () {
         )
 
         await expect(
-          hhArrngController.connect(owner).thisDoBeTheFirstMate(addr2.address),
+          hhArrngController
+            .connect(owner)
+            .thisDoBeTheFirstMate(mockOracle.address),
         ).to.not.be.reverted
 
-        expect(await hhArrngController.firstMate()).to.equal(addr2.address)
+        expect(await hhArrngController.firstMate()).to.equal(mockOracle.address)
       })
 
       it("thisDoBeTheStrongbox - Non-owner cannot call", async () => {
@@ -199,6 +213,78 @@ describe("Arng Controller", function () {
           hhArrngController.connect(addr1)["requestRandomWords(uint256)"](2),
         ).to.be.revertedWith(
           "Insufficient native token for gas, minimum is 1000000000000000. You may need more depending on the number of numbers requested and prevailing gas cost. All excess refunded, less txn fee.",
+        )
+      })
+    })
+
+    describe("Consumer", function () {
+      before(async function () {
+        await expect(
+          hhMockConsumer.connect(addr1).safeMint(),
+        ).to.not.be.reverted
+        await expect(
+          hhMockConsumer.connect(addr2).safeMint(),
+        ).to.not.be.reverted
+        await expect(
+          hhMockConsumer.connect(addr3).safeMint(),
+        ).to.not.be.reverted
+      })
+
+      it("Collection is at prereveal", async () => {
+        expect(await hhMockConsumer.tokenURI(0)).to.equal(prerevealURI)
+        expect(await hhMockConsumer.tokenURI(1)).to.equal(prerevealURI)
+        expect(await hhMockConsumer.tokenURI(2)).to.equal(prerevealURI)
+      })
+
+      it("Can request randomness - refund to caller", async () => {
+        await expect(
+          hhMockConsumer.connect(owner).reveal({ value: "1000000000000000" }),
+        ).to.not.be.reverted
+      })
+
+      it("Can receive randomness", async () => {
+        const initialBalance = await ethers.provider.getBalance(owner.address)
+
+        // No service, mock response
+        await expect(
+          hhArrngController
+            .connect(mockOracle)
+            .landHo(
+              1,
+              hhMockConsumer.address,
+              ethers.constants.HashZero,
+              0,
+              [
+                "62308597009000072040301731319126922416297638952066202699291105688555561071479",
+              ],
+              owner.address,
+              "",
+              "",
+              0,
+              { value: "990000000000000" },
+            ),
+        ).to.not.be.reverted
+
+        const finalBalance = await ethers.provider.getBalance(owner.address)
+
+        const balanceDifference = finalBalance.sub(initialBalance)
+
+        expect(balanceDifference).to.equal("990000000000000")
+      })
+
+      it("Post-response processing complete", async () => {
+        expect(await hhMockConsumer.offset()).to.equal(
+          "62308597009000072040301731319126922416297638952066202699291105688555561071479",
+        )
+
+        expect(await hhMockConsumer.tokenURI(0)).to.equal(
+          revealedURI + "79.json",
+        )
+        expect(await hhMockConsumer.tokenURI(1)).to.equal(
+          revealedURI + "80.json",
+        )
+        expect(await hhMockConsumer.tokenURI(2)).to.equal(
+          revealedURI + "81.json",
         )
       })
     })

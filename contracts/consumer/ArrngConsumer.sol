@@ -14,13 +14,13 @@ import {IArrngController} from "../controller/IArrngController.sol";
 pragma solidity 0.8.19;
 
 abstract contract ArrngConsumer is IArrngConsumer {
-  address private immutable arrngController;
+  IArrngController public immutable arrngController;
 
   /**
    * @dev constructor
    */
   constructor(address arrngController_) {
-    arrngController = arrngController_;
+    arrngController = IArrngController(arrngController_);
   }
 
   /**
@@ -48,7 +48,7 @@ abstract contract ArrngConsumer is IArrngConsumer {
     uint256 skirmishID_,
     uint256[] calldata barrelONum_
   ) external payable {
-    require(msg.sender == arrngController, "BelayThatOfficersOnly");
+    require(msg.sender == address(arrngController), "BelayThatOfficersOnly");
     fulfillRandomWords(skirmishID_, barrelONum_);
   }
 }

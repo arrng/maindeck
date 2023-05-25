@@ -86,7 +86,7 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
    */
   constructor(address captain_) {
     _transferOwnership(captain_);
-    maximumNumberOfNumbers = 10000;
+    maximumNumberOfNumbers = 100;
   }
 
   /**
@@ -194,8 +194,7 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
    */
   function getGold(uint256 amount_) external garrCapnOnly {
     require(strongbox != address(0), "Are ye mad me hearty?!");
-    (bool success, ) = strongbox.call{value: amount_}("");
-    require(success, "Transfer failed");
+    processPayment_(strongbox, amount_);
   }
 
   /**
@@ -269,7 +268,7 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
   /**
    *
    * @dev requestRandomWords: request 1 to n uint256 integers
-   * requestRandomNumbers is overloaded. In this instance you can
+   * requestRandomWords is overloaded. In this instance you can
    * call it without explicitly declaring a refund address, with the
    * refund being paid to the tx.origin for this call.
    *
@@ -286,7 +285,7 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
   /**
    *
    * @dev requestRandomWords: request 1 to n uint256 integers
-   * requestRandomNumbers is overloaded. In this instance you must
+   * requestRandomWords is overloaded. In this instance you must
    * specify the refund address for unused native token.
    *
    * @param numberOfNumbers_: the amount of numbers to request
@@ -400,8 +399,7 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
 
     require(numberOfNumbers_ <= maximumNumberOfNumbers, "GarrrTooManyNumbers");
 
-    (bool success, ) = firstMate.call{value: payment_}("");
-    require(success, "TheTransferWalkedThePlank!(failed)");
+    processPayment_(firstMate, payment_);
 
     emit ArrngRequest(
       caller_,
@@ -479,6 +477,7 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
    * @param apiResponse_: the response from the off-chain rng provider
    * @param apiSignature_: signature for the rng response
    * @param amount_: the amount of unused native toke to refund
+   * @param feeCharged_: the fee for this rng
    *
    */
   function arrngSuccess_(
