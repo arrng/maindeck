@@ -297,8 +297,7 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
     uint256 numberOfNumbers_,
     address refundAddress_
   ) public payable returns (uint256 uniqueID_) {
-    return
-      ahoy_(msg.sender, msg.value, 0, numberOfNumbers_, 0, 0, refundAddress_);
+    return requestWithMethod(numberOfNumbers_, 0, 0, refundAddress_, 0);
   }
 
   /**
@@ -350,10 +349,75 @@ contract ArrngController is IArrngController, Ownable, IERC721Receiver {
     address refundAddress_
   ) public payable returns (uint256 uniqueID_) {
     return
+      requestWithMethod(
+        numberOfNumbers_,
+        minValue_,
+        maxValue_,
+        refundAddress_,
+        1
+      );
+  }
+
+  /**
+   *
+   * @dev requestWithMethod: public method to allow calls specifying the
+   * arrng method, allowing functionality to be extensible without
+   * requiring a new controller contract
+   * requestWithMethod is overloaded. In this instance you can
+   * call it without explicitly declaring a refund address, with the
+   * refund being paid to the tx.origin for this call.
+   *
+   * @param numberOfNumbers_: the amount of numbers to request
+   * @param minValue_: the min of the range
+   * @param maxValue_: the max of the range
+   * @param method_: the arrng method to call
+   *
+   * @return uniqueID_ : unique ID for this request
+   */
+  function requestWithMethod(
+    uint256 numberOfNumbers_,
+    uint256 minValue_,
+    uint256 maxValue_,
+    uint32 method_
+  ) public payable returns (uint256 uniqueID_) {
+    return
+      requestWithMethod(
+        numberOfNumbers_,
+        minValue_,
+        maxValue_,
+        tx.origin,
+        method_
+      );
+  }
+
+  /**
+   *
+   * @dev requestWithMethod: public method to allow calls specifying the
+   * arrng method, allowing functionality to be extensible without
+   * requiring a new controller contract
+   * requestWithMethod is overloaded. In this instance you must
+   * specify the refund address for unused native token.
+   *
+   * @param numberOfNumbers_: the amount of numbers to request
+   * @param minValue_: the min of the range
+   * @param maxValue_: the max of the range
+   * @param refundAddress_: the address for refund of native token
+   * @param method_: the arrng method to call
+   *
+   * @return uniqueID_ : unique ID for this request
+   */
+  function requestWithMethod(
+    uint256 numberOfNumbers_,
+    uint256 minValue_,
+    uint256 maxValue_,
+    address refundAddress_,
+    uint32 method_
+  ) public payable returns (uint256 uniqueID_) {
+    return
       ahoy_(
         msg.sender,
         msg.value,
-        1,
+        method_,
         numberOfNumbers_,
         minValue_,
         maxValue_,

@@ -82,4 +82,25 @@ interface IArrngController {
     uint256 maxValue_,
     address refundAddress_
   ) external payable returns (uint256 uniqueID_);
+
+  /**
+   *
+   * @dev requestWithMethod: public method to allow calls specifying the
+   * arrng method, allowing functionality to be extensible without
+   * requiring a new controller contract
+   *
+   * @param numberOfNumbers_: the amount of numbers to request
+   * @param minValue_: the min of the range
+   * @param maxValue_: the max of the range
+   * @param refundAddress_: the address for refund of native token
+   *
+   * @return uniqueID_ : unique ID for this request
+   */
+  function requestWithMethod(
+    uint256 numberOfNumbers_,
+    uint256 minValue_,
+    uint256 maxValue_,
+    address refundAddress_,
+    uint32 method_
+  ) external payable returns (uint256 uniqueID_);
 }
