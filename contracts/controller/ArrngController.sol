@@ -21,12 +21,12 @@ import {IArrngController} from "./IArrngController.sol";
 import {IArrngConsumer} from "../consumer/IArrngConsumer.sol";
 import {IENSReverseRegistrar} from "../ENS/IENSReverseRegistrar.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
-contract ArrngController is IArrngController, Ownable {
-  using SafeERC20 for IERC20;
+contract ArrngController is IArrngController, Ownable, IERC721Receiver {
   using Strings for uint256;
 
   // Native token required for gas cost to serve RNG:
@@ -54,7 +54,7 @@ contract ArrngController is IArrngController, Ownable {
   event MostNumbersYeCanGetSetMatey(uint256 newNumberLimited);
   event YarrrOfficerOnDeckMatey(address oracle);
   event XMarksTheSpot(address treasury);
-  event ArrrngRequest(
+  event ArrngRequest(
     address indexed caller,
     uint64 indexed requestId,
     uint32 method,
@@ -64,15 +64,15 @@ contract ArrngController is IArrngController, Ownable {
     uint64 ethValue,
     address refundAddress
   );
-  event ArrrngResponse(bytes32 requestTxnHash);
-  event ArrrngServed(
+  event ArrngResponse(bytes32 requestTxnHash);
+  event ArrngServed(
     uint128 indexed requestId,
     uint128 feeCharged,
     uint256[] randomNumbers,
     string apiResponse,
     string apiSignature
   );
-  event ArrrngRefundInsufficientTokenForGas(
+  event ArrngRefundInsufficientTokenForGas(
     address indexed caller,
     uint256 requestId
   );
@@ -211,7 +211,7 @@ contract ArrngController is IArrngController, Ownable {
     uint256 amount_
   ) external garrCapnOnly {
     require(strongbox != address(0), "Are ye mad me hearty?!");
-    IERC20(erc20Address_).safeTransferFrom(address(this), strongbox, amount_);
+    IERC20(erc20Address_).transfer(strongbox, amount_);
   }
 
   /**
@@ -237,6 +237,26 @@ contract ArrngController is IArrngController, Ownable {
       unchecked {
         ++i;
       }
+    }
+  }
+
+  /**
+   *
+   * @dev onERC721Received: allow transfer from owner (for the ENS token).
+   *
+   * @param from_: used to check this is only from the contract owner
+   *
+   */
+  function onERC721Received(
+    address,
+    address from_,
+    uint256,
+    bytes memory
+  ) external view returns (bytes4) {
+    if (from_ == owner()) {
+      return this.onERC721Received.selector;
+    } else {
+      return ("");
     }
   }
 
@@ -318,9 +338,9 @@ contract ArrngController is IArrngController, Ownable {
    * specify the refund address for unused native token.
    *
    * @param numberOfNumbers_: the amount of numbers to request
-   * @param refundAddress_: the address for refund of native token
    * @param minValue_: the min of the range
    * @param maxValue_: the max of the range
+   * @param refundAddress_: the address for refund of native token
    *
    * @return uniqueID_ : unique ID for this request
    */
@@ -383,7 +403,7 @@ contract ArrngController is IArrngController, Ownable {
     (bool success, ) = firstMate.call{value: payment_}("");
     require(success, "TheTransferWalkedThePlank!(failed)");
 
-    emit ArrrngRequest(
+    emit ArrngRequest(
       caller_,
       uint64(skirmishID),
       uint32(method_),
@@ -409,6 +429,7 @@ contract ArrngController is IArrngController, Ownable {
    * @param refundAddress_: the address for refund of native token not used for gas
    * @param apiResponse_: the response from the off-chain rng provider
    * @param apiSignature_: signature for the rng response
+   * @param feeCharged_: the fee for this rng
    *
    */
   function landHo(
@@ -423,9 +444,9 @@ contract ArrngController is IArrngController, Ownable {
     uint256 feeCharged_
   ) external payable {
     require(msg.sender == firstMate, "BelayThatFirstMateOnly");
-    emit ArrrngResponse(requestTxnHash_);
+    emit ArrngResponse(requestTxnHash_);
     if (responseCode_ == 0) {
-      arrrrngSuccess_(
+      arrngSuccess_(
         skirmishID_,
         ship_,
         barrelONum_,
@@ -436,14 +457,14 @@ contract ArrngController is IArrngController, Ownable {
         feeCharged_
       );
     } else {
-      arrrrngFailure_(skirmishID_, ship_, refundAddress_, msg.value);
+      arrngFailure_(skirmishID_, ship_, refundAddress_, msg.value);
     }
   }
 
   /**
    *
-   * @dev arrrrngSuccess_: process a successful response
-   * arrrrng can be requested by a contract call or from an EOA. In the
+   * @dev arrngSuccess_: process a successful response
+   * arrng can be requested by a contract call or from an EOA. In the
    * case of a contract call we call the external method that the calling
    * contract must include to perform downstream processing using the rng. In
    * the case of an EOA call this is a user requesting signed, verifiable rng
@@ -460,7 +481,7 @@ contract ArrngController is IArrngController, Ownable {
    * @param amount_: the amount of unused native toke to refund
    *
    */
-  function arrrrngSuccess_(
+  function arrngSuccess_(
     uint256 skirmishID_,
     address ship_,
     uint256[] calldata barrelONum_,
@@ -471,7 +492,7 @@ contract ArrngController is IArrngController, Ownable {
     uint256 feeCharged_
   ) internal {
     // Success
-    emit ArrrngServed(
+    emit ArrngServed(
       uint128(skirmishID_),
       uint128(feeCharged_),
       barrelONum_,
@@ -495,7 +516,7 @@ contract ArrngController is IArrngController, Ownable {
 
   /**
    *
-   * @dev arrrrngFailure_: process a failed response
+   * @dev arrngFailure_: process a failed response
    * Refund any native token not used for gas:
    *
    * @param skirmishID_: unique request ID
@@ -504,14 +525,14 @@ contract ArrngController is IArrngController, Ownable {
    * @param amount_: the amount for the refund
    *
    */
-  function arrrrngFailure_(
+  function arrngFailure_(
     uint256 skirmishID_,
     address ship_,
     address refundAddress_,
     uint256 amount_
   ) internal {
     // Failure
-    emit ArrrngRefundInsufficientTokenForGas(ship_, skirmishID_);
+    emit ArrngRefundInsufficientTokenForGas(ship_, skirmishID_);
     processPayment_(refundAddress_, amount_);
   }
 

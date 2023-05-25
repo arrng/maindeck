@@ -4,7 +4,7 @@
  *
  * @title IArrngController.sol. Interface for the arrngController.
  *
- * @author arrrrng https://arrrrng.xyz/
+ * @author arrng https://arrng.xyz/
  *
  */
 
@@ -70,9 +70,9 @@ interface IArrngController {
    * specify the refund address for unused native token.
    *
    * @param numberOfNumbers_: the amount of numbers to request
-   * @param refundAddress_: the address for refund of native token
    * @param minValue_: the min of the range
    * @param maxValue_: the max of the range
+   * @param refundAddress_: the address for refund of native token
    *
    * @return uniqueID_ : unique ID for this request
    */
