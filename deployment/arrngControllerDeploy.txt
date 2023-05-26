@@ -1,4 +1,4 @@
-## Bytecode Hash: 
+## Bytecode Hash: 0xd8ef7e99c509c9545ba0ee6707ad46e9293caf9e8373a88101fa169fa115ad87
 
 ## Initial admin: 0x935c6F5B97ed95f72770d1a2Da7EB702E1A26bDd
 
@@ -10,7 +10,7 @@ sudo apt install build-essential
 
 sudo apt install build-essential -y; curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; source "$HOME/.cargo/env"; git clone https://github.com/omnus/create2crunch && cd create2crunch; sed -i 's/0x4/0x40/g' src/lib.rs
 
-cargo run --release 0x0000000000ffe8b47b3e2130213b802212439497 0xE40Cf12aE18855aD4dB59dED35d12aCA53e2Da21 0x098d130e78c6b490ce824aadc251712d9205f6d4f8d1cc6f46828d134fc3b6a9 0 5 7 
+cargo run --release 0x0000000000ffe8b47b3e2130213b802212439497 0x935c6F5B97ed95f72770d1a2Da7EB702E1A26bDd 0xd8ef7e99c509c9545ba0ee6707ad46e9293caf9e8373a88101fa169fa115ad87 0 5 7 
 
 Bytecode:
 
