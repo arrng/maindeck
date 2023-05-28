@@ -23,6 +23,7 @@
     "merkletreejs": "^0.3.10"
   },
   "dependencies": {
+    "@arrng/contracts": "^1.0.1",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "dotenv": "^16.0.3",
     "hardhat-etherscan-abi": "^0.3.0"
