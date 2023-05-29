@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@arrng/contracts/ArrngConsumer.sol";
 
-contract MockConsumer is ArrngConsumer, ERC721, ERC721Burnable, Ownable {
+contract MockConsumerOnChain is ArrngConsumer, ERC721, ERC721Burnable, Ownable {
   using Counters for Counters.Counter;
   using Strings for uint256;
   uint256 public immutable supply;
